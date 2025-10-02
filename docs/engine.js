@@ -206,7 +206,8 @@ function onDrop(source, target,piece) {
 }
 function makeMoveByBot(turn) {
   const move = dumbBot.move(game,turn);
-  console.log(move);
+  console.log('Evaluating...');
+  console.log(`Made move: ${move[0]} to ${move[1]}`)
   const madeMove = game.move(
     {
       from:move[0],
