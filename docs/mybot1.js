@@ -1,4 +1,4 @@
-import { getLegalMoves } from "./interface.js"
+import { getLegalMoves } from "./engine.js"
 import { moveObjToStandardNotation, choice } from "./engine/src/js/util.js"
 
 class MyBot {
