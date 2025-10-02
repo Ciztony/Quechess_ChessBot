@@ -1,0 +1,40 @@
+.sidedivs {
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  position: relative;
+  font-weight: bold;
+  font-size: xx-large;
+  text-align: center;
+  top: 15;
+}
+
+.botversion {
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  position: relative;
+  text-align: center;
+  top: 10
+}
+
+.promotionbuttons {
+  position: relative;
+  top: 10;
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  width: 49px;  
+  height: 49px;
+  color: transparent;  /* hides text if any */
+}
+
+.promotionbuttons img {
+  width: 49px; /* image stays same size */
+  height: auto;
+  display: inline-block;
+  pointer-events: none; /* ensures clicks go to button, not image */
+}
+
+.promotiondiv {
+  background-color: white;
+  text-align: center;
+}
