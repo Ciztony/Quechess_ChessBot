@@ -187,8 +187,8 @@ function onDrop(source, target,piece) {
   try {
     const rank = Number(target[1]);
     //console.log(piece,rank);
-    const isPromotion = (rank === 1 || rank === 8) && piece[1] === "P" && (source === 2 || source === 7);
-    if (isPromotion){
+    const isPromotion = ((rank === 8 && source === 7) || (rank === 1 && source === 2)) && piece === 'P'
+    if (isPromotion) {
       handlePromotion(source,target);
     } else {
       move = game.move({
