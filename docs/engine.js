@@ -42,13 +42,13 @@ function primeOverlays() {
       const position = `${file}${rank}`;
       //console.log(position)
       let domSquare = document.querySelector(`[data-square="${position}"]`);
-      let overlay = document.createElement('div')
-      overlay.classList.add('hint-highlight');
-      overlay.style.display = 'none';
+      let hintOverlay = document.createElement('div')
+      hintOverlay.classList.add('hint-highlight');
+      hintOverlay.style.display = 'none';
       // Position overlay relative to the board
-      overlay.style.top = '0px';
-      overlay.style.left = '0px';
-      domSquare.appendChild(overlay);
+      hintOverlay.style.top = '0px';
+      hintOverlay.style.left = '0px';
+      domSquare.appendChild(hintOverlay);
       gameState.domSquares.set(position,domSquare);
     };
   };
@@ -87,8 +87,7 @@ function applyHintOverlay(source,turn) {
   for (const legalMove of legalMoves) {
     let moveSquare = domSquares.get(legalMove);
     //console.log(moveSquare.children)
-    let children = moveSquare.children
-    let overlay = children[children.length-1];
+    let overlay = moveSquare.lastChild
     let hasPiece = moveSquare.querySelector("img")!=null
     if (hasPiece) {
       overlay.style.backgroundColor = 'rgb(255,0,0,0.5)';
@@ -150,7 +149,7 @@ function onDragStart(source, piece) {
     if (!(gameState.selected && gameState.selectedSquare === source)) {
     // Apply hint overlay
     if (gameState.selected) {
-      undoHintOverlay();
+      undoHintOverlay(source);
     }
     applyHintOverlay(source,turn);
     };
@@ -161,15 +160,15 @@ function onDrop(source, target,piece) {
   const moved = source === target;
   // Undo hint overlay
   if (!moved || (gameState.hintedSquares.length > 0 && gameState.selected)) {
-    undoHintOverlay();
+    undoHintOverlay(source);
   };
   if (moved) {
     if (gameState.selected && gameState.selectedSquare === source) {
-      undoHintOverlay();
+      undoHintOverlay(source);
       gameState.selected = false;
       gameState.selectedSquare = null;
     } else {
-      undoHintOverlay();
+      undoHintOverlay(source);
       applyHintOverlay(source,game.turn());
       gameState.selected = true;
       gameState.selectedSquare = source;
@@ -177,7 +176,7 @@ function onDrop(source, target,piece) {
     return 'snapback';
   };
   if (gameState.selected) {
-    undoHintOverlay();
+    undoHintOverlay(source);
     gameState.selected = false;
     gameState.selectedSquare = null;
   };
@@ -188,7 +187,7 @@ function onDrop(source, target,piece) {
   try {
     const rank = Number(target[1]);
     //console.log(piece,rank);
-    const isPromotion = (rank === 1 || rank === 8) && piece[1] === "P";
+    const isPromotion = (rank === 1 || rank === 8) && piece[1] === "P" && (source === 2 || source === 7);
     if (isPromotion){
       handlePromotion(source,target);
     } else {
