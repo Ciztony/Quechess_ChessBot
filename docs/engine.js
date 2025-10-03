@@ -187,7 +187,7 @@ function onDrop(source, target,piece) {
   try {
     const rank = Number(target[1]);
     //console.log(piece,rank);
-    const isPromotion = ((rank === 8 && source === 7) || (rank === 1 && source === 2)) && piece === 'P'
+    const isPromotion = ((rank === 8 && source[1] === '7') || (rank === 1 && source[1] === '2')) && piece === 'P'
     if (isPromotion) {
       handlePromotion(source,target);
     } else {
