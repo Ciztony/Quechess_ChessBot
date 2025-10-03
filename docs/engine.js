@@ -152,6 +152,14 @@ function displayPromotionPieces(color,add,remove) {
     pieceObj.remove(remove)
   }
 }
+function disableScroll() {
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+  window.onscroll = function () {
+    window.scrollTo(scrollLeft, scrollTop);
+  };
+}
 // Prevent dragging opponent pieces or when game is over
 function onDragStart(source, piece) {
   if (game.isGameOver()) return false;
@@ -303,6 +311,7 @@ promotion.addEventListener('click', (event) => {
     gameState.promotionMove = null;
   }
 });
+disableScroll()
 primeAudio(); // Prepare audio
 primeOverlays(); // Prepare hint overlays
 updateStatus();
