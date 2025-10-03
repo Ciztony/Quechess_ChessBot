@@ -39,6 +39,21 @@
   position: absolute;
   pointer-events: none;
 }
+.red-background {
+  background-color: rgba(255,0,0, 0.6) !important;
+}
+.orange-highlight {
+  background-color: orange !important;
+}
+.visible {
+  display: block !important;
+}
+.invisible {
+  display: none;
+}
+.check-red-background {
+  background-color: red !important;
+}
 
 .white-1e1d7 {
   background-color: #f0d9b5;

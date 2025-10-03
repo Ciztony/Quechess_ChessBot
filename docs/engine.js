@@ -18,11 +18,12 @@ let gameState = {
   inCheck : false,
   checkFlagged : false,
   selected : false,
-  hintedSquares : [],
+  hintedSquares : new Set(),
   domSquares : new Map(),
   promotionMove : null,
   selectedSquare : null,
-  promotionPieces : []
+  promotionPieces : new Set(),
+  sourceDomSquare : null
 }
 
 export function getLegalMoves(game,color) {
@@ -44,10 +45,8 @@ function primeOverlays() {
       let domSquare = document.querySelector(`[data-square="${position}"]`);
       let hintOverlay = document.createElement('div')
       hintOverlay.classList.add('hint-highlight');
-      hintOverlay.style.display = 'none';
+      hintOverlay.style.display = 'none'
       // Position overlay relative to the board
-      hintOverlay.style.top = '0px';
-      hintOverlay.style.left = '0px';
       domSquare.appendChild(hintOverlay);
       gameState.domSquares.set(position,domSquare);
     };
@@ -81,41 +80,55 @@ function playMoveSounds(move) {
     moveSelfSound.play();
   };
 }
+function resetPreviousSourceHighlight(source) {
+  const sourceSquare = gameState.sourceDomSquare 
+  if (sourceSquare && source !== sourceSquare.dataset.square) {
+    sourceSquare.classList.remove('orange-highlight')
+  }
+}
 function applyHintOverlay(source,turn) {
   const legalMoves = getLegalMovesForTurn(source,turn);
   const domSquares = gameState.domSquares;
+  const sourceSquare = domSquares.get(source)
+  resetPreviousSourceHighlight(source)
+  sourceSquare.classList.add('orange-highlight')
+  gameState.sourceDomSquare = sourceSquare
   for (const legalMove of legalMoves) {
     let moveSquare = domSquares.get(legalMove);
     //console.log(moveSquare.children)
     let overlay = moveSquare.lastChild
     let hasPiece = moveSquare.querySelector("img")!=null
+    let toadd;  
+    console.log(moveSquare)
     if (hasPiece) {
-      overlay.style.backgroundColor = 'rgb(255,0,0,0.5)';
+      moveSquare.classList.add('red-background')
+      toadd = moveSquare
     } else {
-      overlay.style.display = 'block';
+      overlay.classList.add('visible')
+      toadd = overlay
     }
-    gameState.hintedSquares.push(overlay); // store overlay to clear later
+    gameState.hintedSquares.add(toadd); // store overlay to clear later
   };
 }
 function applyKingSquareCheckOverlay(turn) {
   const kingSquare = game.findPiece({type: 'k',color:turn})[0];
   const kingInCheckSquare = gameState.domSquares.get(kingSquare);
-  kingInCheckSquare.style.backgroundColor = "rgb(255,0,0)";
+  kingInCheckSquare.classList.add('check-red-background')
   gameState.checkFlagged = kingInCheckSquare;
 }
 function undoHintOverlay(){
   for (const overlay of gameState.hintedSquares) {
-      overlay.style.display = 'none';
+      overlay.classList.remove('red-background','visible')
   }
-  gameState.hintedSquares = [];
+  gameState.hintedSquares.clear();
 }
 function undoKingSquareCheckOverlay() {
   const kingInCheckSquare = gameState.checkFlagged;
-  kingInCheckSquare.style.backgroundColor = "";
+  kingInCheckSquare.classList.remove('check-red-background')
   gameState.checkFlagged = false;
 }
 function handlePromotion(source,target) {
-  displayPromotionPieces(game.turn(),'inline-block',)
+  displayPromotionPieces(game.turn(),'visible','invisible')
   gameState.promotionMove = { source, target };
 }
 function handleMove(move) {
@@ -131,10 +144,12 @@ function handleMove(move) {
   }
   updateStatus();
 }
-function displayPromotionPieces(color,type_) {
+function displayPromotionPieces(color,add,remove) {
   for (const piece of 'BNRQ') {
     let pieceNotation = color+piece
-    document.getElementById(pieceNotation).style.display = type_
+    let pieceObj = document.getElementById(pieceNotation).classList
+    pieceObj.add(add)
+    pieceObj.remove(remove)
   }
 }
 // Prevent dragging opponent pieces or when game is over
@@ -175,6 +190,8 @@ function onDrop(source, target,piece) {
     };
     return 'snapback';
   };
+  gameState.sourceDomSquare.classList.remove('orange-highlight')
+  console.log(gameState.sourceDomSquare)
   if (gameState.selected) {
     undoHintOverlay(source);
     gameState.selected = false;
@@ -188,7 +205,7 @@ function onDrop(source, target,piece) {
     const rank = Number(target[1]);
     console.log(source[1])
     //console.log(piece,rank);
-    const isPromotion = ((rank === 8 && source[1] === '7') || (rank === 1 && source[1] === '2')) && piece === 'P'
+    const isPromotion = ((rank === 8 && source[1] === '7') || (rank === 1 && source[1] === '2')) && piece[1] === 'P'
     console.log(isPromotion)
     if (isPromotion) {
       handlePromotion(source,target);
@@ -219,6 +236,7 @@ function makeMoveByBot(turn) {
   return madeMove;
 }
 function onSnapEnd() {
+  gameState.sourceDomSquare = null
   if (game.turn() === botColor) {
       const madeMove = makeMoveByBot(game.turn());
       handleMove(madeMove);
@@ -269,7 +287,7 @@ const botColor = board.orientation()==='white' ? 'b' :'w';
 promotion.addEventListener('click', (event) => {
   if (event.target.tagName === 'BUTTON' && gameState.promotionMove) {
     let piecePromoted = event.target.id;
-    displayPromotionPieces(game.turn(),'none')
+    displayPromotionPieces(game.turn(),'invisible','visible')
     let move = game.move({
       from: gameState.promotionMove.source,
       to: gameState.promotionMove.target,
