@@ -23,7 +23,9 @@ let gameState = {
   promotionMove : null,
   selectedSquare : null,
   promotionPieces : new Set(),
-  sourceDomSquare : null
+  sourceDomSquare : null,
+  legalMoves : new Set(),
+  piecesOnSquare : new Set()
 }
 
 export function getLegalMoves(game,color) {
@@ -48,7 +50,10 @@ function primeOverlays() {
       hintOverlay.style.display = 'none'
       // Position overlay relative to the board
       domSquare.appendChild(hintOverlay);
-      gameState.domSquares.set(position,domSquare);
+      gameState.domSquares.set(position, {
+        square: domSquare,
+        overlay: hintOverlay
+      });
     };
   };
 }
@@ -80,6 +85,13 @@ function playMoveSounds(move) {
     moveSelfSound.play();
   };
 }
+function repositionBoard() {
+  board.position(game.fen())
+}
+function updatePiecesOnSquare(source,target) {
+  gameState.piecesOnSquare.delete(source)
+  gameState.piecesOnSquare.add(target)
+}
 function resetPreviousSourceHighlight(source) {
   const sourceSquare = gameState.sourceDomSquare 
   if (sourceSquare && source !== sourceSquare.dataset.square) {
@@ -89,30 +101,28 @@ function resetPreviousSourceHighlight(source) {
 function applyHintOverlay(source,turn) {
   const legalMoves = getLegalMovesForTurn(source,turn);
   const domSquares = gameState.domSquares;
-  const sourceSquare = domSquares.get(source)
+  const sourceSquare = domSquares.get(source).square
   resetPreviousSourceHighlight(source)
   sourceSquare.classList.add('orange-highlight')
   gameState.sourceDomSquare = sourceSquare
   for (const legalMove of legalMoves) {
-    let moveSquare = domSquares.get(legalMove);
-    //console.log(moveSquare.children)
-    let overlay = moveSquare.lastChild
-    let hasPiece = moveSquare.querySelector("img")!=null
+    let { square, overlay } = gameState.domSquares.get(legalMove)
+    let hasPiece = square.querySelector("img")!=null
     let toadd;  
-    console.log(moveSquare)
     if (hasPiece) {
-      moveSquare.classList.add('red-background')
-      toadd = moveSquare
+      square.classList.add('red-background')
+      toadd = square
     } else {
       overlay.classList.add('visible')
       toadd = overlay
     }
     gameState.hintedSquares.add(toadd); // store overlay to clear later
   };
+  gameState.legalMoves = new Set(legalMoves)
 }
 function applyKingSquareCheckOverlay(turn) {
   const kingSquare = game.findPiece({type: 'k',color:turn})[0];
-  const kingInCheckSquare = gameState.domSquares.get(kingSquare);
+  const kingInCheckSquare = gameState.domSquares.get(kingSquare).square;
   kingInCheckSquare.classList.add('check-red-background')
   gameState.checkFlagged = kingInCheckSquare;
 }
@@ -142,7 +152,6 @@ function handleMove(move) {
   if (gameState.checkFlagged && !game.isAttacked(gameState.checkFlagged)) {
     undoKingSquareCheckOverlay();
   }
-  updateStatus();
 }
 function displayPromotionPieces(color,add,remove) {
   for (const piece of 'BNRQ') {
@@ -164,59 +173,67 @@ function onDragStart(source, piece) {
     if (!(gameState.selected && gameState.selectedSquare === source)) {
     // Apply hint overlay
     if (gameState.selected) {
-      undoHintOverlay(source);
+      undoHintOverlay();
     }
     applyHintOverlay(source,turn);
     };
   };
 }
+export function canPromote(rank,source,piece) {
+  return ((rank === 8 && source[1] === '7') || (rank === 1 && source[1] === '2')) && piece[1] === 'P'
+}
 // Handle piece drop
+function handleValidMove(source,target,piece) {
+  let move;
+  const rank = Number(target[1]);
+  console.log(source[1])
+  //console.log(piece,rank);
+  if (canPromote(rank,source,piece)) {
+    handlePromotion(source,target);
+  } else {
+    move = game.move({
+      from: source,
+      to: target, 
+    });
+    updatePiecesOnSquare(source,target)
+    if (!move) return 'snapback';
+    handleMove(move);
+    updateStatus()
+  }
+  return
+}
 function onDrop(source, target,piece) {
-  const moved = source === target;
+  const isSameSquare = source === target;
   // Undo hint overlay
-  if (!moved || (gameState.hintedSquares.length > 0 && gameState.selected)) {
-    undoHintOverlay(source);
+  if (!isSameSquare || (gameState.hintedSquares.length > 0 && gameState.selected)) {
+    undoHintOverlay();
   };
-  if (moved) {
+  if (isSameSquare) {
     if (gameState.selected && gameState.selectedSquare === source) {
-      undoHintOverlay(source);
+      undoHintOverlay();
       gameState.selected = false;
       gameState.selectedSquare = null;
     } else {
-      undoHintOverlay(source);
+      undoHintOverlay();
       applyHintOverlay(source,game.turn());
       gameState.selected = true;
       gameState.selectedSquare = source;
     };
     return 'snapback';
-  };
+};
   gameState.sourceDomSquare.classList.remove('orange-highlight')
   console.log(gameState.sourceDomSquare)
   if (gameState.selected) {
-    undoHintOverlay(source);
+    undoHintOverlay();
     gameState.selected = false;
     gameState.selectedSquare = null;
   };
   if (!isValidSquare(target)) {
     return 'snapback';
   };
-  let move;
   try {
-    const rank = Number(target[1]);
-    console.log(source[1])
-    //console.log(piece,rank);
-    const isPromotion = ((rank === 8 && source[1] === '7') || (rank === 1 && source[1] === '2')) && piece[1] === 'P'
-    console.log(isPromotion)
-    if (isPromotion) {
-      handlePromotion(source,target);
-    } else {
-      move = game.move({
-        from: source,
-        to: target, 
-      });
-      if (!move) return 'snapback';
-      handleMove(move);
-    }
+    const result = handleValidMove(source,target,piece)
+    if (result) return result
   } catch (e) {
     return 'snapback';
   }
@@ -233,6 +250,7 @@ function makeMoveByBot(turn) {
       promotion:move[2]
     }
   );
+  updatePiecesOnSquare(move[0],move[1])
   return madeMove;
 }
 function onSnapEnd() {
@@ -240,8 +258,10 @@ function onSnapEnd() {
   if (game.turn() === botColor) {
       const madeMove = makeMoveByBot(game.turn());
       handleMove(madeMove);
+      updateStatus()
   }
-  board.position(game.fen());
+  repositionBoard();
+  gameState.legalMoves.clear()
 }
 // Update game status text, FEN, and PGN
 function updateStatus() {
@@ -286,23 +306,47 @@ const botColor = board.orientation()==='white' ? 'b' :'w';
 // Add event listener to look out for promotion click
 promotion.addEventListener('click', (event) => {
   if (event.target.tagName === 'BUTTON' && gameState.promotionMove) {
-    let piecePromoted = event.target.id;
+    const piecePromoted = event.target.id;
     displayPromotionPieces(game.turn(),'invisible','visible')
+    let source = gameState.promotionMove.source
+    let target = gameState.promotionMove.target
     let move = game.move({
       from: gameState.promotionMove.source,
       to: gameState.promotionMove.target,
       promotion: piecePromoted
     });
-    if (!move) return board.position(game.fen()); // reset if invalid
+    updatePiecesOnSquare(source,target)
+    if (!move) return repositionBoard(); // reset if invalid
     let turn = game.turn()
     if (turn === botColor) {
       makeMoveByBot(turn);
+      updateStatus()
     };
-    board.position(game.fen());
+    repositionBoard();
     handleMove(move);
     gameState.promotionMove = null;
   }
 });
+document.getElementById('myBoard').addEventListener('click', (event) => {
+  const squareClicked = event.target
+  let source = gameState.selectedSquare
+  let target = squareClicked.dataset.square
+  if (!(gameState.legalMoves.has(target))) return;
+  if (!gameState.selected) return
+  const piece = gameState.sourceDomSquare.lastChild.dataset.piece
+  undoHintOverlay()
+  gameState.sourceDomSquare.classList.remove('orange-highlight')
+  gameState.selected = false
+  gameState.selectedSquare = null
+  handleValidMove(source,target,piece)
+  gameState.legalMoves.clear()
+  if (!gameState.promotionMove && !game.isGameOver()) {
+    const botMove = makeMoveByBot(game.turn())
+    handleMove(botMove)
+    updateStatus()
+  }
+  repositionBoard()
+})
 primeAudio(); // Prepare audio
 primeOverlays(); // Prepare hint overlays
 updateStatus();
