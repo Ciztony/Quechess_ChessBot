@@ -1,20 +1,22 @@
-// Initialize chessboard and game
+// Initialize chessboard and game -------------------------------------------------
 import { Chess } from 'https://esm.sh/chess.js';
-import { dumbBot } from './mybot1.js'
-import { isValidSquare } from './engine/src/js/util.js';
+import { BotManager } from './engine/src/js/botmanager.js';
+import { isValidSquare, optimisedClassRemoval, canPromote } from './engine/src/js/util.js';
+
+// Variables ----------------------------------------------------------------------
+
 const game = new Chess();
 const $status = $('#status');
-const checkOverlay = document.createElement('div');
 const captureSound = document.getElementById('capture');
 const moveSelfSound = document.getElementById('move-self');
 const moveCheckSound = document.getElementById('move-check');
 const castleSound = document.getElementById('castle');
 const promoteSound = document.getElementById('promote');
 const gameEndSound = document.getElementById('game-end');
-const promotion = document.getElementById('promotion');
 const rootImageDirectory = 'engine/assets/img/chesspieces/wikipedia';
-checkOverlay.classList.add("check-overlay");
-let gameState = {
+let myBot;
+let botManager;
+const gameState = {
   inCheck : false,
   checkFlagged : false,
   selected : false,
@@ -22,37 +24,42 @@ let gameState = {
   domSquares : new Map(),
   promotionMove : null,
   selectedSquare : null,
-  promotionPieces : new Set(),
   sourceDomSquare : null,
-  legalMoves : new Set(),
-  piecesOnSquare : new Set()
+  legalMovesInPosition : new Map()
 }
 
-export function getLegalMoves(game,color) {
-    const filtered = game.moves({verbose:true});
-    return filtered.filter(piece=>piece.color===color);
+// Legal moves --------------------------------------------------------------------
+
+// Get legal moves
+export function getLegalMoves(game) {
+  const filtered = game.moves({verbose:true});
+  return filtered
 }
 
 // Get legal moves of the current playing side
-function getLegalMovesForTurn(source,colour) {
-  const totalLegalMoves = game.moves({verbose:true});
-  const legalMoves = totalLegalMoves.filter(piece=>((piece.color===colour)&&(piece.from===source))).map(piece=>piece.to);
-  return legalMoves;
+function getLegalMovesForTurn(source,piece) {
+  const legalMovesForPiece = game.moves({ square: source, verbose: true }).map(move => move.to)
+  gameState.legalMovesInPosition.set(`${source}-${piece}`,legalMovesForPiece) 
+  return legalMovesForPiece;
 }
+
+// Priming functions --------------------------------------------------------------
+
 function primeOverlays() {
   for (const file  of 'abcdefgh') {
     for (let rank=1;rank<9;rank++) {
       const position = `${file}${rank}`;
       //console.log(position)
-      let domSquare = document.querySelector(`[data-square="${position}"]`);
-      let hintOverlay = document.createElement('div')
+      const domSquare = document.querySelector(`[data-square="${position}"]`);
+      const hintOverlay = document.createElement('div')
       hintOverlay.classList.add('hint-highlight');
       hintOverlay.style.display = 'none'
       // Position overlay relative to the board
       domSquare.appendChild(hintOverlay);
       gameState.domSquares.set(position, {
         square: domSquare,
-        overlay: hintOverlay
+        overlay: hintOverlay,
+        hasPiece: domSquare.querySelector('img') !== null
       });
     };
   };
@@ -85,29 +92,45 @@ function playMoveSounds(move) {
     moveSelfSound.play();
   };
 }
+
+// Utility functions --------------------------------------------------------------
+
 function repositionBoard() {
   board.position(game.fen())
 }
 function updatePiecesOnSquare(source,target) {
-  gameState.piecesOnSquare.delete(source)
-  gameState.piecesOnSquare.add(target)
+  gameState.domSquares.get(source).hasPiece = false
+  gameState.domSquares.get(target).hasPiece = true
 }
+
+
+// Applying and undoing hints and overlays -----------------------------------------
+
 function resetPreviousSourceHighlight(source) {
   const sourceSquare = gameState.sourceDomSquare 
   if (sourceSquare && source !== sourceSquare.dataset.square) {
     sourceSquare.classList.remove('orange-highlight')
   }
 }
-function applyHintOverlay(source,turn) {
-  const legalMoves = getLegalMovesForTurn(source,turn);
+
+function applyHintOverlay(source,piece) {
+  // Effeciently check cache for legal Moves
+  let legalMoves;
+  const key = `${source}-${piece}`
+  if (gameState.legalMovesInPosition.has(key)) {
+    legalMoves = gameState.legalMovesInPosition.get(key)
+  } else {
+    legalMoves = getLegalMovesForTurn(source,piece)
+  }
+
+  // Iterate to add hints
   const domSquares = gameState.domSquares;
   const sourceSquare = domSquares.get(source).square
   resetPreviousSourceHighlight(source)
   sourceSquare.classList.add('orange-highlight')
   gameState.sourceDomSquare = sourceSquare
   for (const legalMove of legalMoves) {
-    let { square, overlay } = gameState.domSquares.get(legalMove)
-    let hasPiece = square.querySelector("img")!=null
+    let { square, overlay, hasPiece } = domSquares.get(legalMove)
     let toadd;  
     if (hasPiece) {
       square.classList.add('red-background')
@@ -128,30 +151,23 @@ function applyKingSquareCheckOverlay(turn) {
 }
 function undoHintOverlay(){
   for (const overlay of gameState.hintedSquares) {
-      overlay.classList.remove('red-background','visible')
+      let classList = overlay.classList
+      optimisedClassRemoval(classList,'red-background')
+      optimisedClassRemoval(classList,'visible')
   }
   gameState.hintedSquares.clear();
 }
-function undoKingSquareCheckOverlay() {
-  const kingInCheckSquare = gameState.checkFlagged;
+function undoKingSquareCheckOverlay(checkFlagged) {
+  const kingInCheckSquare = checkFlagged
   kingInCheckSquare.classList.remove('check-red-background')
   gameState.checkFlagged = false;
 }
+
+// Promotion ----------------------------------------------------------------------
+
 function handlePromotion(source,target) {
   displayPromotionPieces(game.turn(),'visible','invisible')
   gameState.promotionMove = { source, target };
-}
-function handleMove(move) {
-  gameState.inCheck = game.inCheck();
-  if (gameState.inCheck) {
-    moveCheckSound.play();
-  } else {
-    playMoveSounds(move);
-  }
-  // Undo king square check overlay
-  if (gameState.checkFlagged && !game.isAttacked(gameState.checkFlagged)) {
-    undoKingSquareCheckOverlay();
-  }
 }
 function displayPromotionPieces(color,add,remove) {
   for (const piece of 'BNRQ') {
@@ -161,8 +177,25 @@ function displayPromotionPieces(color,add,remove) {
     pieceObj.remove(remove)
   }
 }
+
+// Main piece movement functions --------------------------------------------------
+
+function handleMove(move) {
+  gameState.inCheck = game.inCheck();
+  if (gameState.inCheck) {
+    moveCheckSound.play();
+  } else {
+    playMoveSounds(move);
+  }
+  const checkFlagged = gameState.checkFlagged
+  // Undo king square check overlay
+  if (checkFlagged && !game.isAttacked(checkFlagged)) {
+    undoKingSquareCheckOverlay(checkFlagged);
+  }
+  updateStatus()
+}
 // Prevent dragging opponent pieces or when game is over
-function onDragStart(source, piece) {
+function handleDragStart(source, piece) {
   if (game.isGameOver()) return false;
   const turn = game.turn();
   const isWhiteTurn = turn === 'w';
@@ -175,20 +208,17 @@ function onDragStart(source, piece) {
     if (gameState.selected) {
       undoHintOverlay();
     }
-    applyHintOverlay(source,turn);
+    applyHintOverlay(source,piece);
     };
   };
-}
-export function canPromote(rank,source,piece) {
-  return ((rank === 8 && source[1] === '7') || (rank === 1 && source[1] === '2')) && piece[1] === 'P'
 }
 // Handle piece drop
 function handleValidMove(source,target,piece) {
   let move;
   const rank = Number(target[1]);
-  console.log(source[1])
+  const file = Number(source[1])
   //console.log(piece,rank);
-  if (canPromote(rank,source,piece)) {
+  if (canPromote(rank,file,piece)) {
     handlePromotion(source,target);
   } else {
     move = game.move({
@@ -198,11 +228,10 @@ function handleValidMove(source,target,piece) {
     updatePiecesOnSquare(source,target)
     if (!move) return 'snapback';
     handleMove(move);
-    updateStatus()
   }
   return
 }
-function onDrop(source, target,piece) {
+function handleDrop(source, target,piece) {
   const isSameSquare = source === target;
   // Undo hint overlay
   if (!isSameSquare || (gameState.hintedSquares.length > 0 && gameState.selected)) {
@@ -215,14 +244,13 @@ function onDrop(source, target,piece) {
       gameState.selectedSquare = null;
     } else {
       undoHintOverlay();
-      applyHintOverlay(source,game.turn());
+      applyHintOverlay(source,piece);
       gameState.selected = true;
       gameState.selectedSquare = source;
     };
     return 'snapback';
 };
-  gameState.sourceDomSquare.classList.remove('orange-highlight')
-  console.log(gameState.sourceDomSquare)
+  optimisedClassRemoval(gameState.sourceDomSquare.classList,'orange-highlight')
   if (gameState.selected) {
     undoHintOverlay();
     gameState.selected = false;
@@ -240,29 +268,38 @@ function onDrop(source, target,piece) {
 
 }
 function makeMoveByBot(turn) {
-  const move = dumbBot.move(game,turn);
+  const move = myBot.move(game);
+  const source = move[0]
+  const target = move[1]
   console.log('Evaluating...');
-  console.log(`Made move: ${move[0]} to ${move[1]}`)
+  console.log(`Made move: ${source} to ${target}`)
   const madeMove = game.move(
     {
-      from:move[0],
-      to:move[1],
+      from:source,
+      to:target,
       promotion:move[2]
     }
   );
-  updatePiecesOnSquare(move[0],move[1])
+  updatePiecesOnSquare(source,target)
   return madeMove;
 }
-function onSnapEnd() {
-  gameState.sourceDomSquare = null
+function handleSnapEnd() {
+  gameState.sourceDomSquare = null;
+  
   if (game.turn() === botColor) {
-      const madeMove = makeMoveByBot(game.turn());
+    // Add delay to simulate bot thinking time
+    setTimeout(() => {
+      const madeMove = makeMoveByBot(botColor);
       handleMove(madeMove);
-      updateStatus()
+      repositionBoard();
+    }, 500); // 500ms delay, you can adjust this
+  } else {
+    repositionBoard();
   }
-  repositionBoard();
-  gameState.legalMoves.clear()
+  
+  gameState.legalMoves.clear();
 }
+
 // Update game status text, FEN, and PGN
 function updateStatus() {
   let status = '';
@@ -293,60 +330,83 @@ function updateStatus() {
   }
   $status.html(status);
 }
-const boardConfig = {
-  position: 'start',
-  draggable: true,
-  pieceTheme: `${rootImageDirectory}/{piece}.png`,
-  onDragStart,
-  onDrop,
-  onSnapEnd,
-  };
-const board = Chessboard('myBoard', boardConfig);
-const botColor = board.orientation()==='white' ? 'b' :'w';
-// Add event listener to look out for promotion click
-promotion.addEventListener('click', (event) => {
-  if (event.target.tagName === 'BUTTON' && gameState.promotionMove) {
+
+// Handle Promotion ------------------------------------------------------------
+function handlePromotionDisplay(event) {
     const piecePromoted = event.target.id;
     displayPromotionPieces(game.turn(),'invisible','visible')
     let source = gameState.promotionMove.source
     let target = gameState.promotionMove.target
     let move = game.move({
-      from: gameState.promotionMove.source,
-      to: gameState.promotionMove.target,
+      from: source,
+      to: target,
       promotion: piecePromoted
     });
     updatePiecesOnSquare(source,target)
     if (!move) return repositionBoard(); // reset if invalid
-    let turn = game.turn()
-    if (turn === botColor) {
-      makeMoveByBot(turn);
-      updateStatus()
+    if (game.turn() === botColor) {
+      makeMoveByBot(botColor);
     };
     repositionBoard();
     handleMove(move);
     gameState.promotionMove = null;
-  }
+}
+document.querySelectorAll('.promotionbuttons').forEach(button => {
+  button.addEventListener('click', handlePromotionDisplay);
 });
-document.getElementById('myBoard').addEventListener('click', (event) => {
-  const squareClicked = event.target
-  let source = gameState.selectedSquare
-  let target = squareClicked.dataset.square
-  if (!(gameState.legalMoves.has(target))) return;
-  if (!gameState.selected) return
-  const piece = gameState.sourceDomSquare.lastChild.dataset.piece
+
+// Create board ----------------------------------------------------------------
+async function initBotManager() {
+  const { BotManager } = await import('./engine/src/js/botmanager.js');
+  botManager = new BotManager();
+  botManager.loadBots();
+  myBot = botManager.bots[0]
+}
+
+const boardConfig = {
+  position: 'start',
+  draggable: true,
+  pieceTheme: `${rootImageDirectory}/{piece}.png`,
+  onDragStart : handleDragStart,
+  onDrop : handleDrop,
+  onSnapEnd : handleSnapEnd
+  };
+const board = Chessboard('myBoard', boardConfig);
+
+// Load bots -------------------------------------------------------------------
+const botColor = board.orientation()==='white' ? 'b' :'w';
+
+function resetBoard() {
   undoHintOverlay()
-  gameState.sourceDomSquare.classList.remove('orange-highlight')
-  gameState.selected = false
-  gameState.selectedSquare = null
-  handleValidMove(source,target,piece)
-  gameState.legalMoves.clear()
-  if (!gameState.promotionMove && !game.isGameOver()) {
-    const botMove = makeMoveByBot(game.turn())
-    handleMove(botMove)
-    updateStatus()
+  if (gameState.checkFlagged) {
+    undoKingSquareCheckOverlay()
   }
-  repositionBoard()
-})
+  if (gameState.sourceDomSquare) {
+    gameState.sourceDomSquare.classList.remove('orange-highlight')
+    gameState.sourceDomSquare = false
+    gameState.selectedSquare = false
+    gameState.selected = false
+  } 
+  board.start(false)
+  game.reset()
+  updateStatus()
+}
+
+// Handle option change
+function handleOptionChange(event) {
+  if (!game.isGameOver()) {
+    const botIndex = Number(event.target.value)
+    myBot = botManager.bots[botIndex]
+    console.log(`Switched to bot: ${myBot.name}`)
+    resetBoard()
+  }
+}
+// Main setup functions -----------------------------------------------------------
+
 primeAudio(); // Prepare audio
 primeOverlays(); // Prepare hint overlays
 updateStatus();
+initBotManager();
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('botversion').addEventListener('change', handleOptionChange);
+})

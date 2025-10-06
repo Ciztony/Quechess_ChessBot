@@ -1,9 +1,12 @@
-import { getLegalMoves } from "./engine.js"
-import { moveObjToStandardNotation, choice } from "./engine/src/js/util.js"
+import { getLegalMoves } from "../engine.js"
+import { moveObjToStandardNotation, choice } from "../engine/src/js/util.js"
 // A bot that plays random moves
 class MyBot {
-    move(game,color) {
-        let legalMoves = getLegalMoves(game,color)
+    constructor() {
+        this.name = 'Dumb Bot'
+    }
+    move(game) {
+        let legalMoves = getLegalMoves(game,game.turn())
         //console.log(legalMoves)
         let randomMove = choice(legalMoves)
         //console.log(randomMove)
@@ -17,5 +20,5 @@ class MyBot {
         return moveObj
     }
 }
-export const dumbBot = new MyBot()
+export const bot1 = new MyBot()
 
