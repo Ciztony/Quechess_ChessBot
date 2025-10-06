@@ -23,8 +23,8 @@
 }
 .hint-highlight {
   position: absolute;
-  width: 49px;
-  height: 49px;
+  width: 99px;
+  height: 99px;
   background-color: rgba(255, 0, 0, 0.5);
   top: 0px;
   left: 0px;
