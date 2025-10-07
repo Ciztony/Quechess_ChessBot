@@ -28,13 +28,6 @@ const gameState = {
   legalMovesInPosition : new Map()
 }
 
-// Legal moves --------------------------------------------------------------------
-
-// Get legal moves
-export function getLegalMoves(game) {
-  const filtered = game.moves({verbose:true});
-  return filtered
-}
 
 // Get legal moves of the current playing side
 function getLegalMovesForTurn(source,piece) {
@@ -407,6 +400,3 @@ primeAudio(); // Prepare audio
 primeOverlays(); // Prepare hint overlays
 updateStatus();
 initBotManager();
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('botversion').addEventListener('change', handleOptionChange);
-})
