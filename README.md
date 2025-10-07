@@ -1,3 +1,4 @@
 ### Quechess Bot
 
-A dumb bot
+Bot 1 - Dumb at 1 elo
+Bot 2 - Smarter at 500 elo
