@@ -158,8 +158,9 @@ class MyBot {
             const captureSquare = game.get(targetSquare);
             const isCapture = !!move.capture;
             if (isCapture) {
-                moveScoreGuess = s0 * materialWeights[captureSquare.type]- materialWeights[movePieceType];
-            }
+                const attackerValue = materialWeights[movePieceType];
+                const victimValue = materialWeights[captureSquare.type];
+                moveScoreGuess = 10 * victimValue - attackerValue;
             if (move.promotion) {
                 moveScoreGuess += materialWeights[move.promotion];
             }
