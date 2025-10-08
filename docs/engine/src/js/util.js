@@ -18,4 +18,3 @@ export function optimisedClassRemoval(classList,class_) {
 export function canPromote(rank,file,piece) {
   return ((rank === 8 && file === 7) || (rank === 1 && file === 2)) && piece[1] === 'P'
 }
-

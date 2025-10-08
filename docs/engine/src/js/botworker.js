@@ -1,3 +1,0 @@
-
-
-Comlink.expose(new MyBot());

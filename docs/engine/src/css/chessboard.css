@@ -39,6 +39,10 @@
   position: absolute;
   pointer-events: none;
 }
+.post-move-overlay {
+  background-color: rgba(255, 238, 0, 0.6) !important;
+  background-blend-mode: multiply
+}
 .red-background {
   background-color: rgba(255,0,0, 0.6) !important;
 }

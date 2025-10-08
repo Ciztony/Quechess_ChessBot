@@ -1,5 +1,5 @@
 import { moveObjToStandardNotation, choice } from "../engine/src/js/util.js"
-import { TextDisplay } from "../engine/src/js/textdisplay.js"
+import { Ui } from "../engine/src/js/ui.js"
 // A bot that actually carries out standard eval
 
 class MyBot {
@@ -158,10 +158,13 @@ class MyBot {
             const captureSquare = game.get(targetSquare);
             const isCapture = !!move.capture;
             if (isCapture) {
-                moveScoreGuess = 10 * materialWeights[captureSquare.type]- materialWeights[movePieceType];
+                moveScoreGuess = s0 * materialWeights[captureSquare.type]- materialWeights[movePieceType];
             }
             if (move.promotion) {
                 moveScoreGuess += materialWeights[move.promotion];
+            }
+            if (isCapture && game.attackers(targetSquare, opponentColor).length > 0) {
+                moveScoreGuess -= materialWeights[movePieceType];
             }
             const { file, rank } = squareIndexOf[targetSquare];
             const squareIndex = (8 - rank) * 8 + file;
@@ -271,7 +274,13 @@ class MyBot {
             moveObj.push(null);
         }
         const endTime = performance.now();
-        TextDisplay.displayText(`Move: ${chosenMove.san}, Positions evaluated: ${this.positionsEvaluated} positions, Moves calculated: ${this.movesCalculated} moves. Completed in ${((endTime-startTime)/1000).toFixed(3)}`);
+        Ui.displayText([
+            `Move: ${chosenMove.san}`, 
+            `Positions evaluated: ${this.positionsEvaluated} positions`,
+            `Moves calculated: ${this.movesCalculated} moves`,
+            `Completed in ${((endTime-startTime)/1000).toFixed(3)} seconds`,
+            `Bot eval: ${(bestEval/100)>0?'+':''}${bestEval/100} points for Black`
+        ]);
         this.positionsEvaluated = 0
         this.movesCalculated = 0
         return moveObj;
