@@ -27,7 +27,7 @@ export class Ui {
         this.gameState.domSquares.set(position, {
             square: domSquare,
             overlay: hintOverlay,
-            hasPiece: domSquare.querySelector('img')
+            hasPiece: domSquare.querySelector('img') != null
         });
         };
     };
@@ -55,7 +55,7 @@ export class Ui {
       for (const legalMove of legalMoves) {
         let { square, overlay, hasPiece } = domSquares.get(legalMove)
         let toadd;  
-        if (hasPiece && hasPiece !== 'b') {
+        if (hasPiece) {
           square.classList.add('red-background')
           toadd = square
         } else {

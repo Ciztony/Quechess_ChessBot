@@ -31,9 +31,9 @@ const ui = new Ui(game,gameState,sound)
 function repositionBoard() {
   board.position(game.fen())
 }
-function updatePiecesOnSquare(source,target,color) {
+function updatePiecesOnSquare(source,target) {
   gameState.domSquares.get(source).hasPiece = false
-  gameState.domSquares.get(target).hasPiece = color
+  gameState.domSquares.get(target).hasPiece = true
 }
 
 // Main piece movement functions --------------------------------------------------
@@ -61,7 +61,7 @@ function updateStatus() {
         if (gameState.inCheck) {
           // Apply king square check overlay
           status += `, ${moveColor} is in check.`;
-          overlay.applyKingSquareCheckOverlay(turn);
+          ui.applyKingSquareCheckOverlay(turn);
         }
       }
       $status.html(status);
@@ -112,7 +112,7 @@ function handleValidMove(source,target,piece) {
       from: source,
       to: target, 
     });
-    updatePiecesOnSquare(source,target,game.turn())
+    updatePiecesOnSquare(source,target)
     if (!move) return 'snapback';
     handleMove(move);
   }
@@ -146,12 +146,8 @@ function handleDrop(source, target,piece) {
   if (!isValidSquare(target)) {
     return 'snapback';
   };
-  try {
-    const result = handleValidMove(source,target,piece)
-    if (result) return result
-  } catch (e) {
-    return 'snapback';
-  }
+  const result = handleValidMove(source,target,piece)
+  if (result) return result
 
 }
 function makeMoveByBot() {
@@ -172,7 +168,7 @@ function makeMoveByBot() {
       promotion:move[2]
     }
   );
-  updatePiecesOnSquare(source,target,botColor)
+  updatePiecesOnSquare(source,target)
   return madeMove;
 }
 function handleSnapEnd() {
@@ -203,7 +199,7 @@ function handlePromotionDisplay(event) {
       to: target,
       promotion: piecePromoted
     });
-    updatePiecesOnSquare(source,target,color)
+    updatePiecesOnSquare(source,target)
     if (!move) return repositionBoard(); // reset if invalid
     if (game.turn() === botColor) {
       makeMoveByBot(botColor);
