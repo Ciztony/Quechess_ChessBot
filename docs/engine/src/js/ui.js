@@ -5,7 +5,6 @@ export class Ui {
         this.gameState = gameState
         this.game = game
         this.sound = sound
-        this.$status = $('#status');
     }
     // Get legal moves for current player
     getLegalMovesForTurn(source,piece) {
@@ -113,36 +112,6 @@ export class Ui {
     handlePromotion(source,target) {
         this.displayPromotionPieces(this.game.turn(),'visible','invisible')
         this.gameState.promotionMove = { source, target };
-    }
-    // Handle ui of status
-    updateStatus() {
-      let status = '';
-      const turn = this.game.turn()
-      const moveColor = turn === 'w' ? 'White' : 'Black';
-      if (this.game.isCheckmate()) {
-        this.sound.GAMEENDSOUND.play()
-        status = `Game over, ${moveColor} is in checkmate.`;
-      } else if (this.game.isDrawByFiftyMoves()) {
-        this.sound.GAMEENDSOUND.play()
-        status = 'Game over, drawn by 50 move rule.';
-      } else if (this.game.isInsufficientMaterial()) {
-        this.sound.GAMEENDSOUND.play()
-        status = 'Game over, drawn by insufficient material.';
-      } else if (this.game.isStalemate()) {
-        this.sound.GAMEENDSOUND.play()
-        status = 'Game over, drawn by stalemate';
-      } else if (this.game.isDraw()) {
-        this.sound.GAMEENDSOUND.play()
-        status = 'Game over, drawn position.';
-      } else {
-        status = `${moveColor} to move`;
-        if (this.gameState.inCheck) {
-          // Apply king square check overlay
-          status += `, ${moveColor} is in check.`;
-          overlay.applyKingSquareCheckOverlay(turn);
-        }
-      }
-      this.$status.html(status);
     }
   // Displaying text
   static displayText(textList) {

@@ -11,6 +11,7 @@ const game = new Chess();
 const rootImageDirectory = 'engine/assets/img/chesspieces/wikipedia';
 let myBot;
 let botManager;
+const $status = $('#status')
 const sound = new Sound()
 const gameState = {
   inCheck : false,
@@ -22,8 +23,7 @@ const gameState = {
   selectedSquare : null,
   sourceDomSquare : null,
   legalMovesInPosition : new Map(),
-  lastMoveDomPair: false,
-  postMoveHighlighted: false
+  lastMoveDomPair: false
 }
 const ui = new Ui(game,gameState,sound)
 // Utility functions --------------------------------------------------------------
@@ -37,6 +37,35 @@ function updatePiecesOnSquare(source,target,color) {
 }
 
 // Main piece movement functions --------------------------------------------------
+function updateStatus() {
+      let status = '';
+      const turn = game.turn()
+      const moveColor = turn === 'w' ? 'White' : 'Black';
+      if (game.isCheckmate()) {
+        sound.GAMEENDSOUND.play()
+        status = `Game over, ${moveColor} is in checkmate.`;
+      } else if (game.isDrawByFiftyMoves()) {
+        this.sound.GAMEENDSOUND.play()
+        status = 'Game over, drawn by 50 move rule.';
+      } else if (game.isInsufficientMaterial()) {
+        sound.GAMEENDSOUND.play()
+        status = 'Game over, drawn by insufficient material.';
+      } else if (game.isStalemate()) {
+        sound.GAMEENDSOUND.play()
+        status = 'Game over, drawn by stalemate';
+      } else if (game.isDraw()) {
+        sound.GAMEENDSOUND.play()
+        status = 'Game over, drawn position.';
+      } else {
+        status = `${moveColor} to move`;
+        if (gameState.inCheck) {
+          // Apply king square check overlay
+          status += `, ${moveColor} is in check.`;
+          overlay.applyKingSquareCheckOverlay(turn);
+        }
+      }
+      $status.html(status);
+    }
 
 function handleMove(move) {
   gameState.inCheck = game.inCheck();
@@ -50,7 +79,7 @@ function handleMove(move) {
   if (checkFlagged && !game.isAttacked(checkFlagged)) {
     ui.undoKingSquareCheckOverlay(checkFlagged);
   }
-  ui.updateStatus()
+  updateStatus()
 }
 // Prevent dragging opponent pieces or when game is over
 function handleDragStart(source, piece) {
@@ -123,14 +152,6 @@ function handleDrop(source, target,piece) {
   } catch (e) {
     return 'snapback';
   }
-  if (game.turn() === botColor) {
-    // Add delay to simulate bot thinking time
-    setTimeout(() => {
-      const madeMove = makeMoveByBot(botColor);
-      handleMove(madeMove);
-      repositionBoard();
-    }, 500); // 500ms delay, you can adjust this
-  }
 
 }
 function makeMoveByBot() {
@@ -157,6 +178,14 @@ function makeMoveByBot() {
 function handleSnapEnd() {
   gameState.sourceDomSquare = null;
   repositionBoard();
+  if (game.turn() === botColor) {
+    // Add delay to simulate bot thinking time
+    setTimeout(() => {
+      const madeMove = makeMoveByBot(botColor);
+      handleMove(madeMove);
+      repositionBoard();
+    }, 500); // 500ms delay, you can adjust this
+  }
   gameState.legalMoves.clear();
 }
 
@@ -209,6 +238,9 @@ const botColor = board.orientation()==='white' ? 'b' :'w';
 
 function resetBoard() {
   ui.undoHintOverlay()
+  if (gameState.lastMoveDomPair) {
+    ui.undoPostMoveHighlight()
+  }
   if (gameState.checkFlagged) {
     ui.undoKingSquareCheckOverlay()
   }
@@ -220,7 +252,7 @@ function resetBoard() {
   } 
   board.start(false)
   game.reset()
-  ui.updateStatus()
+  updateStatus()
   Ui.displayText([''])
 }
 // Handle option change
@@ -235,6 +267,6 @@ function handleOptionChange(event) {
 // Main setup functions -----------------------------------------------------------
 sound.primeAudio(); // Prepare audio
 ui.primeOverlays() // Prepare hint overlays
-ui.updateStatus();
+updateStatus();
 initBotManager();
 document.getElementById('botversion').addEventListener('change', handleOptionChange);
