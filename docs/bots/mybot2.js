@@ -161,6 +161,7 @@ class MyBot {
                 const attackerValue = materialWeights[movePieceType];
                 const victimValue = materialWeights[captureSquare.type];
                 moveScoreGuess = 10 * victimValue - attackerValue;
+            }
             if (move.promotion) {
                 moveScoreGuess += materialWeights[move.promotion];
             }
