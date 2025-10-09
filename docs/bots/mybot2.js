@@ -170,7 +170,7 @@ class MyBot {
             }
             const { file, rank } = squareIndexOf[targetSquare];
             const squareIndex = (8 - rank) * 8 + file;
-            moveScoreGuess += pieceSquareTables[movePieceType][squareIndex];
+            moveScoreGuess += pieceSquareTables[movePieceType][squareIndex]*10
             move.score = moveScoreGuess
         }
         moves.sort((a, b) => b.score - a.score); // descending order
