@@ -93,18 +93,14 @@ class MyBot {
         return this.game.findPiece({type:piece,color:color}).length
     }
     countMaterial(color) {
-        for (const piece of ['p','n','b','r','q']) {
-            this.pieceCountCache[color+piece] = this.getNumOfPieces(color, piece);
-        }
         const mw = this.materialWeights;
-        const cache = this.pieceCountCache
-        return (
-            cache[color+'p'] * mw['p'] +
-            cache[color+'n'] * mw['n'] +
-            cache[color+'b'] * mw['b'] +
-            cache[color+'r'] * mw['r'] +
-            cache[color+'q'] * mw['q']
-        );
+        let evaluation = 0
+        for (const piece of ['p','n','b','r','q']) {
+            const numberOfPieceType = this.getNumOfPieces(color, piece);
+            evaluation += numberOfPieceType * mw[piece]
+            this.pieceCountCache[color+piece] = numberOfPieceType
+        }
+        return evaluation
     }
     calculateEndgameWeight() {
         const pieceCountCache = this.pieceCountCache
@@ -132,18 +128,17 @@ class MyBot {
         const score = opponentKingDistFromCenter + (14 - distBetweenKings);
         return score * 10 * endGameWeight;
     }
-    eval(game,opponentColor) {
+    eval(game,whiteToMove,turn,opponentColor) {
         this.pieceCountCache = {}
         this.positionsEvaluated += 1
         const whiteEval = this.countMaterial('w');
         const blackEval = this.countMaterial('b');
         let evaluation = whiteEval - blackEval;
         const endGameWeight = this.calculateEndgameWeight()
-        const turn = game.turn()
         if (endGameWeight >= 1) {
-            evaluation += this.forceKingToCornerEndgameEval(game.findPiece({type:'k',color:'w'})[0],game.findPiece({type:'k',color:opponentColor})[0],endGameWeight)
+            evaluation += this.forceKingToCornerEndgameEval(game.findPiece({type:'k',color:turn})[0],game.findPiece({type:'k',color:opponentColor})[0],endGameWeight)
         }
-        const perspective = turn === 'w' ? 1 : -1;
+        const perspective = whiteToMove ? 1 : -1;
         return evaluation * perspective;
     }
     orderMoves(game, moves, opponentColor) {
@@ -177,8 +172,10 @@ class MyBot {
     }
     quiescence(alpha,beta) {
         const game = this.game
-        const opponentColor = game.turn()==='w'?'b':'w'
-        let evaluation = this.eval(game,opponentColor)
+        const turn = game.turn()
+        const whiteToMove = turn === 'w'
+        const opponentColor = whiteToMove?'b':'w'
+        let evaluation = this.eval(game,whiteToMove,turn,opponentColor)
         if (evaluation >= beta) return beta
         alpha = Math.max(alpha,evaluation)
         let captureMoves = game.moves({verbose:true}).filter(move=>move.capture)
