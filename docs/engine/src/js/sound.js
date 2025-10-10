@@ -16,13 +16,14 @@ export class Sound {
             this.PROMOTESOUND,
             this.GAMEENDSOUND
         ];
+        // Play each sound to ensure it is working before piece move
         sounds.forEach(sound => {
             sound.volume = 0;
             sound.play().catch(() => {});
             setTimeout(() => { sound.pause(); sound.currentTime = 0; sound.volume = 1; }, 50);
         });
     }
-    playMoveSounds(move) {
+    playMoveSounds(move) { // Handles various sounds played by different kinds of moves
         const moveFlags = move.flags
         if (moveFlags === 'p') {
             this.PROMOTESOUND.play();

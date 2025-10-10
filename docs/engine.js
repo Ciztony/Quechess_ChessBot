@@ -7,7 +7,7 @@ import { isValidSquare, optimisedClassRemoval, canPromote } from './engine/src/j
 
 // Variables ----------------------------------------------------------------------
 
-const game = new Chess();
+const game = new Chess(); // Board logic representation
 const rootImageDirectory = 'engine/assets/img/chesspieces/wikipedia';
 let myBot;
 let botManager;
@@ -35,7 +35,6 @@ function updatePiecesOnSquare(source,target) {
   gameState.domSquares.get(source).hasPiece = false
   gameState.domSquares.get(target).hasPiece = true
 }
-
 // Main piece movement functions --------------------------------------------------
 function updateStatus() {
       let status = '';
@@ -43,9 +42,9 @@ function updateStatus() {
       const moveColor = turn === 'w' ? 'White' : 'Black';
       if (game.isCheckmate()) {
         sound.GAMEENDSOUND.play()
-        status = `Game over, ${moveColor} is in checkmate.`;
+        status = `Game over, ${moveColor} in checkmate.`;
       } else if (game.isDrawByFiftyMoves()) {
-        this.sound.GAMEENDSOUND.play()
+        sound.GAMEENDSOUND.play()
         status = 'Game over, drawn by 50 move rule.';
       } else if (game.isInsufficientMaterial()) {
         sound.GAMEENDSOUND.play()
@@ -85,9 +84,9 @@ function handleMove(move) {
 function handleDragStart(source, piece) {
   if (game.isGameOver()) return false;
   const turn = game.turn();
-  const isWhiteTurn = turn === 'w';
+  const whiteToMove = turn === 'w';
   const isWhitePiece = piece.startsWith('w');
-  if ((isWhiteTurn && !isWhitePiece) || (!isWhiteTurn && isWhitePiece) || (turn === botColor)) {
+  if ((whiteToMove && !isWhitePiece) || (!whiteToMove && isWhitePiece) || (turn === botColor)) { // If piece does not belong to the current color or move belongs to bot, then abort
     return false ;
   } else {
     if (!(gameState.selected && gameState.selectedSquare === source)) {
@@ -104,15 +103,14 @@ function handleValidMove(source,target,piece) {
   let move;
   const rank = Number(target[1]);
   const file = Number(source[1])
-  //console.log(piece,rank);
   if (canPromote(rank,file,piece)) {
-    ui.handlePromotion(source,target);
+    ui.handlePromotion(source,target); // Displays promotion ui for player
   } else {
     move = game.move({
       from: source,
       to: target, 
     });
-    updatePiecesOnSquare(source,target)
+    updatePiecesOnSquare(source,target) // Update the piece cache when a piece is moved
     if (!move) return 'snapback';
     handleMove(move);
   }
@@ -120,7 +118,7 @@ function handleValidMove(source,target,piece) {
 }
 function handleDrop(source, target,piece) {
   const isSameSquare = source === target;
-  // Undo hint overlay
+  // Undo hint overlay and selection logic
   if (!isSameSquare || (gameState.hintedSquares.size > 0 && gameState.selected)) {
     ui.undoHintOverlay();
   };
@@ -137,7 +135,7 @@ function handleDrop(source, target,piece) {
     };
     return 'snapback';
 };
-  optimisedClassRemoval(gameState.sourceDomSquare.classList,'orange-highlight')
+  optimisedClassRemoval(gameState.sourceDomSquare.classList,'selected-highlight') // Remove the highlight for the source piece that was selected before movement
   if (gameState.selected) {
     ui.undoHintOverlay();
     gameState.selected = false;
@@ -154,6 +152,7 @@ function makeMoveByBot() {
   const move = myBot.move(game);
   const source = move[0]
   const target = move[1]
+  // Apply post move highlight showing which piece moved from where to where
   if (gameState.lastMoveDomPair) {
     ui.undoPostMoveHighlight()
   }
@@ -171,49 +170,58 @@ function makeMoveByBot() {
   updatePiecesOnSquare(source,target)
   return madeMove;
 }
-function handleSnapEnd() {
+function handleSnapEnd(source,target) {
   gameState.sourceDomSquare = null;
   repositionBoard();
+
+  // Reset before highlighting player move
+  if (gameState.lastMoveDomPair) {
+    ui.undoPostMoveHighlight()
+  }
+  ui.applyPostMoveHighlight(source,target)
+
   if (game.turn() === botColor) {
     // Add delay to simulate bot thinking time
     setTimeout(() => {
       const madeMove = makeMoveByBot(botColor);
       handleMove(madeMove);
       repositionBoard();
-    }, 500); // 500ms delay, you can adjust this
+    }, 500); 
   }
-  gameState.legalMoves.clear();
+  gameState.legalMoves.clear(); // Reset legal moves
 }
 
-// Update game status text, FEN, and PGN
 // Main promotion handler  ------------------------------------------------------------
 function handlePromotionDisplay(event) {
-    const piecePromoted = event.target.id;
-    const color = game.turn()
-    ui.displayPromotionPieces(color,'invisible','visible')
-    let source = gameState.promotionMove.source
-    let target = gameState.promotionMove.target
-    console.log(gameState.promotionMove)
-    let move = game.move({
-      from: source,
-      to: target,
-      promotion: piecePromoted
-    });
-    updatePiecesOnSquare(source,target)
-    if (!move) return repositionBoard(); // reset if invalid
-    if (game.turn() === botColor) {
-      makeMoveByBot(botColor);
-    };
-    repositionBoard();
-    handleMove(move);
-    gameState.promotionMove = null;
+    if (gameState.promotionMove) {
+      const piecePromoted = event.target.id;
+      const color = game.turn()
+
+      ui.displayPromotionPieces(color,'invisible','visible')
+      let source = gameState.promotionMove.source
+      let target = gameState.promotionMove.target
+
+      let move = game.move({
+        from: source,
+        to: target,
+        promotion: piecePromoted
+      });
+      updatePiecesOnSquare(source,target)
+      if (!move) return repositionBoard(); // reset if invalid
+      if (game.turn() === botColor) { // Make move by bot after promotion
+        makeMoveByBot(botColor);
+      };
+      repositionBoard();
+      handleMove(move);
+      gameState.promotionMove = null;
+    }
 }
 document.querySelectorAll('.promotionbuttons').forEach(button => {
   button.addEventListener('click', handlePromotionDisplay);
 });
 
 // Create board ----------------------------------------------------------------
-async function initBotManager() {
+async function initBotManager() { // The bot manager handles selection of bots
   const { BotManager } = await import('./engine/src/js/botmanager.js');
   botManager = new BotManager();
   botManager.loadBots();
@@ -234,14 +242,16 @@ const botColor = board.orientation()==='white' ? 'b' :'w';
 
 function resetBoard() {
   ui.undoHintOverlay()
+  // Undo selected piece highlight
   if (gameState.lastMoveDomPair) {
     ui.undoPostMoveHighlight()
   }
+  // Undo king check overlay
   if (gameState.checkFlagged) {
     ui.undoKingSquareCheckOverlay()
   }
   if (gameState.sourceDomSquare) {
-    gameState.sourceDomSquare.classList.remove('orange-highlight')
+    gameState.sourceDomSquare.classList.remove('selected-highlight')
     gameState.sourceDomSquare = false
     gameState.selectedSquare = false
     gameState.selected = false
@@ -249,10 +259,10 @@ function resetBoard() {
   board.start(false)
   game.reset()
   updateStatus()
-  Ui.displayText([''])
+  Ui.displayText(['']) // Reset textdisplay
 }
 // Handle option change
-function handleOptionChange(event) {
+function handleOptionChange(event) { // Handles the DOM bot switching
   if (!game.isGameOver()) {
     const botIndex = Number(event.target.value)
     myBot = botManager.bots[botIndex]
@@ -263,6 +273,9 @@ function handleOptionChange(event) {
 // Main setup functions -----------------------------------------------------------
 sound.primeAudio(); // Prepare audio
 ui.primeOverlays() // Prepare hint overlays
+document.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+}, { passive: false });
+document.getElementById('botversion').addEventListener('change', handleOptionChange);
 updateStatus();
 initBotManager();
-document.getElementById('botversion').addEventListener('change', handleOptionChange);

@@ -23,11 +23,12 @@
 }
 .hint-highlight {
   position: absolute;
-  width: 99px;
-  height: 99px;
-  background-color: rgba(255, 0, 0, 0.5);
-  top: 0px;
-  left: 0px;
+  width: 15px;
+  height: 15px;
+  background-color: rgba(68, 68, 68, 0.5);
+  top: 43px;
+  left: 42px;
+  border-radius: 50%;
   pointer-events: none;
 }
 .check-overlay {
@@ -40,14 +41,14 @@
   pointer-events: none;
 }
 .post-move-overlay {
-  background-color: rgba(255, 238, 0, 0.6) !important;
-  background-blend-mode: multiply
+  background-color: rgba(209, 196, 10, 0.9) !important;
+  pointer-events: none
 }
-.red-background {
-  background-color: rgba(255,0,0, 0.6) !important;
+.piece-hint-background {
+  background-color: rgba(92, 92, 92, 0.5) !important;
 }
-.orange-highlight {
-  background-color: orange !important;
+.selected-highlight {
+  background-color: rgba(209, 196, 10, 0.9) !important;
 }
 .visible {
   display: block !important;

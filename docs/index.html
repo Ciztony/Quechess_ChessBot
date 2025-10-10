@@ -5,10 +5,16 @@
         <link rel="stylesheet" href="engine/src/css/chessboard.css">
         <link rel="stylesheet" href="engine/src/css/misc.css">
         <style>
+            html, body {
+                overflow: hidden;       /* Prevent scrollbars */
+                height: 100%;           /* Prevent mobile bounce scroll */
+                touch-action: none;     /* Disable touch scrolling (mobile) */
+                overscroll-behavior: none; /* Prevent pull-to-refresh */
+            }
             #myBoard {
-            position: relative;
-            width: 800px;
-            margin: 20px auto;
+                position: relative;
+                width: 800px;
+                margin: 20px auto;
             }
         </style>
     </head>

@@ -1,7 +1,7 @@
 import { moveObjToStandardNotation, choice } from "../engine/src/js/util.js"
 import { Ui } from "../engine/src/js/ui.js"
 // A bot that actually carries out standard eval
-
+const displayDebug = false
 class MyBot {
     constructor() {
         this.name = 'Smart Bot'
@@ -155,7 +155,7 @@ class MyBot {
             if (isCapture) {
                 const attackerValue = materialWeights[movePieceType];
                 const victimValue = materialWeights[captureSquare.type];
-                moveScoreGuess = 10 * victimValue - attackerValue;
+                moveScoreGuess = 10 * (victimValue - attackerValue);
             }
             if (move.promotion) {
                 moveScoreGuess += materialWeights[move.promotion];
@@ -273,13 +273,15 @@ class MyBot {
             moveObj.push(null);
         }
         const endTime = performance.now();
-        Ui.displayText([
-            `Move: ${chosenMove.san}`, 
-            `Positions evaluated: ${this.positionsEvaluated} positions`,
-            `Moves calculated: ${this.movesCalculated} moves`,
-            `Completed in ${((endTime-startTime)/1000).toFixed(3)} seconds`,
-            `Bot eval: ${(bestEval/100)>0?'+':''}${bestEval/100} points for Black`
-        ]);
+        if (displayDebug) { 
+            Ui.displayText([
+                `Move: ${chosenMove.san}`, 
+                `Positions evaluated: ${this.positionsEvaluated} positions`,
+                `Moves calculated: ${this.movesCalculated} moves`,
+                `Completed in ${((endTime-startTime)/1000).toFixed(3)} seconds`,
+                `Bot evaluation: ${(bestEval/100)>0?'+':''}${bestEval/100} points for Black`
+            ]);
+        }
         this.positionsEvaluated = 0
         this.movesCalculated = 0
         return moveObj;

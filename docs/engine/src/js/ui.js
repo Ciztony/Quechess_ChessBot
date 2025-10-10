@@ -9,18 +9,17 @@ export class Ui {
     // Get legal moves for current player
     getLegalMovesForTurn(source,piece) {
         const legalMovesForPiece = this.game.moves({ square: source, verbose: true }).map(move => move.to)
-        this.gameState.legalMovesInPosition.set(`${source}-${piece}`,legalMovesForPiece) 
+        this.gameState.legalMovesInPosition.set(`${source}-${piece}`,legalMovesForPiece) // Cache the legal moves in position to allow for later lookup
         return legalMovesForPiece;
     }
-    // Prime hint overlays
+    // Prime hint overlays (adds hint overlays into the DOM first to ensure that highlights can be quickly toggled)
     primeOverlays() {
     for (const file  of 'abcdefgh') {
         for (let rank=1;rank<9;rank++) {
         const position = `${file}${rank}`;
-        //console.log(position)
         const domSquare = document.querySelector(`[data-square="${position}"]`);
         const hintOverlay = document.createElement('div')
-        hintOverlay.classList.add('hint-highlight');
+        hintOverlay.classList.add('hint-highlight'); 
         hintOverlay.style.display = 'none'
         // Position overlay relative to the board
         domSquare.appendChild(hintOverlay);
@@ -36,7 +35,7 @@ export class Ui {
     resetPreviousSourceHighlight(source) {
       const sourceSquare = this.gameState.sourceDomSquare 
       if (sourceSquare && source !== sourceSquare.dataset.square) {
-        sourceSquare.classList.remove('orange-highlight')
+        sourceSquare.classList.remove('selected-highlight')
       }
     }
     applyHintOverlay(source,piece) {
@@ -50,29 +49,31 @@ export class Ui {
       const domSquares = this.gameState.domSquares;
       const sourceSquare = domSquares.get(source).square
       this.resetPreviousSourceHighlight(source)
-      sourceSquare.classList.add('orange-highlight')
+
+      sourceSquare.classList.add('selected-highlight') // Add highlight to show which piece moved from which square to which square
+
       this.gameState.sourceDomSquare = sourceSquare
       for (const legalMove of legalMoves) {
         let { square, overlay, hasPiece } = domSquares.get(legalMove)
         let toadd;  
         if (hasPiece) {
-          square.classList.add('red-background')
+          square.classList.add('piece-hint-background') // Add square hints if capture
           toadd = square
         } else {
-          overlay.classList.add('visible')
+          overlay.classList.add('visible') // Add translucent circle hints if empty square
           toadd = overlay
         }
         this.gameState.hintedSquares.add(toadd); // store overlay to clear later
       };
-      this.gameState.legalMoves = new Set(legalMoves)
+      this.gameState.legalMoves = new Set(legalMoves) 
     }
     applyKingSquareCheckOverlay(turn) {
       const kingSquare = this.game.findPiece({type: 'k',color:turn})[0];
       const kingInCheckSquare = this.gameState.domSquares.get(kingSquare).square;
-      kingInCheckSquare.classList.add('check-red-background')
+      kingInCheckSquare.classList.add('check-red-background') // Add king square check overlay onto the king in check
       this.gameState.checkFlagged = kingInCheckSquare;
     }
-    applyPostMoveHighlight(source,target) {
+    applyPostMoveHighlight(source,target) { // Function that highlights where a piece moved from and where it went after a successful move
       const domSquares = this.gameState.domSquares
       const sourceDomSquare = domSquares.get(source).square
       const targetDomSquare = domSquares.get(target).square
@@ -89,7 +90,7 @@ export class Ui {
     undoHintOverlay(){
       for (const overlay of this.gameState.hintedSquares) {
           let classList = overlay.classList
-          optimisedClassRemoval(classList,'red-background')
+          optimisedClassRemoval(classList,'piece-hint-background')
           optimisedClassRemoval(classList,'visible')
       }
       this.gameState.hintedSquares.clear();
@@ -104,6 +105,7 @@ export class Ui {
         for (const piece of 'BNRQ') {
             let pieceNotation = color+piece
             let pieceObj = document.getElementById(pieceNotation).classList
+            // Toggle visibility
             pieceObj.add(add)
             pieceObj.remove(remove)
         }
@@ -113,7 +115,7 @@ export class Ui {
         this.displayPromotionPieces(this.game.turn(),'visible','invisible')
         this.gameState.promotionMove = { source, target };
     }
-  // Displaying text
+  // Displaying text in text display
   static displayText(textList) {
     const el = document.getElementById('textdisplay');
     el.innerHTML = ''

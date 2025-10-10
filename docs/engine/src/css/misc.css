@@ -2,16 +2,22 @@
   font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
   position: relative;
   font-weight: bold;
-  font-size: xx-large;
+  font-size: 50px;
   text-align: center;
+  padding: 1%;
   top: 15;
 }
 
 .botversion {
   font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  font-size: 23px;
   position: relative;
   text-align: center;
   top: 10
+}
+
+#botversion {
+  font-size: 20px;
 }
 
 .promotionbuttons {
@@ -42,7 +48,7 @@
 #textdisplay {
   text-align: center;
   font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-  font-size: xx-large;
+  font-size: x-large;
 }
 
 
