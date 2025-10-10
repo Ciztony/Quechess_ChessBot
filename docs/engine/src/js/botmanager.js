@@ -5,7 +5,7 @@ export class BotManager {
     constructor() {
         this.bots = [bot2,bot1];
         this.botDom = [];
-        this.botOption = document.getElementById('botversion')
+        this.botOption = document.getElementById('botversion');
     }
     loadBots() {
         for (const [index,bot] of this.bots.entries()) {

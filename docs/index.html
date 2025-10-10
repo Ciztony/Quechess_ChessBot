@@ -19,42 +19,48 @@
         </style>
     </head>
     <body>
-        <div class="botversion">
-            <label>Bot Version:</label>
-            <select id="botversion">
-            </select>
+        <div id="elements">
+            <div class="botversion">
+                <label>Bot Version:</label>
+                <select id="botversion">
+                </select>
+            </div>
+            <div id="status" class="sidedivs"></div>
+            <div id="myBoard"></div>
+            <p id="textdisplay"></p>
+            <div id="promotion" class="promotiondiv">
+                <button id="q" class="promotionbuttons">
+                    <img id="bQ" src="engine/assets/img/chesspieces/wikipedia/bQ.png" style="display: none">
+                    <img id="wQ" src="engine/assets/img/chesspieces/wikipedia/wQ.png" style="display: none">
+                </button>
+                <button id="r" class="promotionbuttons">
+                    <img id="bR" src="engine/assets/img/chesspieces/wikipedia/bR.png" style="display: none">
+                    <img id="wR" src="engine/assets/img/chesspieces/wikipedia/wR.png" style="display: none">
+                </button>
+                <button id="b" class="promotionbuttons">
+                    <img id="bB" src="engine/assets/img/chesspieces/wikipedia/bB.png" style="display: none">
+                    <img id="wB" src="engine/assets/img/chesspieces/wikipedia/wB.png" style="display: none">
+                </button>
+                <button id="n" class="promotionbuttons">
+                    <img id="bN" src="engine/assets/img/chesspieces/wikipedia/bN.png" style="display: none">
+                    <img id="wN" src="engine/assets/img/chesspieces/wikipedia/wN.png" style="display: none">
+                </button>
+            </div>
         </div>
-        <div id="status" class="sidedivs"></div>
-        <div id="myBoard"></div>
-        <audio id="move-self" src="engine/assets/sounds/move-self.mp3"></audio>
-        <audio id="move-check" src="engine/assets/sounds/move-check.mp3"></audio>
-        <audio id="capture" src="engine/assets/sounds/capture.mp3"></audio>
-        <audio id="castle" src="engine/assets/sounds/castle.mp3"></audio>
-        <audio id="promote" src="engine/assets/sounds/promote.mp3"></audio>
-        <audio id="game-end" src="engine/assets/sounds/game-end.mp3"></audio>\
-        <p id="textdisplay"></p>
-        <div id="promotion" class="promotiondiv">
-            <button id="q" class="promotionbuttons">
-                <img id="bQ" src="engine/assets/img/chesspieces/wikipedia/bQ.png" style="display: none">
-                <img id="wQ" src="engine/assets/img/chesspieces/wikipedia/wQ.png" style="display: none">
-            </button>
-            <button id="r" class="promotionbuttons">
-                <img id="bR" src="engine/assets/img/chesspieces/wikipedia/bR.png" style="display: none">
-                <img id="wR" src="engine/assets/img/chesspieces/wikipedia/wR.png" style="display: none">
-            </button>
-            <button id="b" class="promotionbuttons">
-                <img id="bB" src="engine/assets/img/chesspieces/wikipedia/bB.png" style="display: none">
-                <img id="wB" src="engine/assets/img/chesspieces/wikipedia/wB.png" style="display: none">
-            </button>
-            <button id="n" class="promotionbuttons">
-                <img id="bN" src="engine/assets/img/chesspieces/wikipedia/bN.png" style="display: none">
-                <img id="wN" src="engine/assets/img/chesspieces/wikipedia/wN.png" style="display: none">
-            </button>
+        <div id="audio">
+            <audio id="move-self" src="engine/assets/sounds/move-self.mp3"></audio>
+            <audio id="move-check" src="engine/assets/sounds/move-check.mp3"></audio>
+            <audio id="capture" src="engine/assets/sounds/capture.mp3"></audio>
+            <audio id="castle" src="engine/assets/sounds/castle.mp3"></audio>
+            <audio id="promote" src="engine/assets/sounds/promote.mp3"></audio>
+            <audio id="game-end" src="engine/assets/sounds/game-end.mp3"></audio>
         </div>
-        <script src="engine/src/js/jquery-3.4.1.min.js"></script>
-        <script type="module" src="engine/src/js/chessboard.js"></script>
-        <script type="module" src="engine/src/js/ui.js"></script>
-        <script type="module" src="engine/src/js/botmanager.js"></script>
-        <script type="module" src="engine.js"></script>
+        <div id="scripts">
+            <script src="engine/src/js/jquery-3.4.1.min.js"></script>
+            <script type="module" src="engine/src/js/chessboard.js"></script>
+            <script type="module" src="engine/src/js/ui.js"></script>
+            <script type="module" src="engine/src/js/botmanager.js"></script>
+            <script type="module" src="engine.js"></script>
+        </div>
     </body>
 </html>
