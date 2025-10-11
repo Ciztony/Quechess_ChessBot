@@ -45,7 +45,7 @@
   pointer-events: none
 }
 .piece-hint-background {
-  background-color: rgba(92, 92, 92, 0.5) !important;
+  background-color: rgba(122, 122, 122, 0.5) !important;
 }
 .selected-highlight {
   background-color: rgba(209, 196, 10, 0.9) !important;

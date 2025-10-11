@@ -248,7 +248,7 @@ class MyBot {
         const startTime = performance.now();
         let legalMoves = game.moves({verbose:true})
         let bestEval = -Infinity;
-        let bestMoves = [];
+        this.bestMoves = [];
 
         for (const move of legalMoves) {
             game.move(move); // apply move
@@ -257,14 +257,14 @@ class MyBot {
 
             if (evaluation > bestEval) {
                 bestEval = evaluation;
-                bestMoves = [move];
+                this.bestMoves = [move];
             } else if (evaluation === bestEval) {
-                bestMoves.push(move);
+                this.bestMoves.push(move);
             }
         }
 
         // Pick randomly among equally good best moves
-        let chosenMove = choice(bestMoves);
+        let chosenMove = choice(this.bestMoves);
         let moveObj = moveObjToStandardNotation(chosenMove);
 
         if (chosenMove.promotion) {
@@ -286,7 +286,9 @@ class MyBot {
         this.movesCalculated = 0
         return moveObj;
     }
-
+    cancelSearch() {
+        return moveObjToStandardNotation(choice(this.bestMoves))
+    }
 
 }
 export const bot2 = new MyBot()

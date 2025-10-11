@@ -141,11 +141,12 @@ function handleDrop(source, target,piece) {
     gameState.selected = false;
     gameState.selectedSquare = null;
   };
-  if (!isValidSquare(target)) {
-    return 'snapback';
-  };
-  const result = handleValidMove(source,target,piece)
-  if (result) return result
+  try {
+    const result = handleValidMove(source,target,piece)
+    if (result) return result
+  } catch (e) {
+    return 'snapback'
+  }
 
 }
 function makeMoveByBot() {
@@ -186,7 +187,7 @@ function handleSnapEnd(source,target) {
       const madeMove = makeMoveByBot(botColor);
       handleMove(madeMove);
       repositionBoard();
-    }, 500); 
+    }, 200); 
   }
   gameState.legalMoves.clear(); // Reset legal moves
 }
@@ -273,9 +274,11 @@ function handleOptionChange(event) { // Handles the DOM bot switching
 // Main setup functions -----------------------------------------------------------
 sound.primeAudio(); // Prepare audio
 ui.primeOverlays() // Prepare hint overlays
+// Prevent scrolling
 document.addEventListener('touchmove', function(e) {
   e.preventDefault();
 }, { passive: false });
 document.getElementById('botversion').addEventListener('change', handleOptionChange);
+
 updateStatus();
 initBotManager();
