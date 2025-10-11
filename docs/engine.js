@@ -187,7 +187,7 @@ function handleSnapEnd(source,target) {
       const madeMove = makeMoveByBot(botColor);
       handleMove(madeMove);
       repositionBoard();
-    }, 200); 
+    }, 300); 
   }
   gameState.legalMoves.clear(); // Reset legal moves
 }
