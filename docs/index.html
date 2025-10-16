@@ -3,6 +3,7 @@
         <meta charset="utf-8">
         <title>Quechess</title>
         <link rel="stylesheet" href="engine/src/css/chessboard.css">
+        <link rel="shortcut icon" href="engine/assets/img/favicon.ico">
         <link rel="stylesheet" href="engine/src/css/misc.css">
         <style>
             html, body {
@@ -23,7 +24,7 @@
         <div id="elements">
             <div id="status" class="sidedivs"></div>
             <div id="myBoard"></div>
-            <div class="botversion">
+            <div class="labeltype">
                 <label>Bot Version:</label>
                 <select id="botversion">
                 </select>
@@ -61,6 +62,7 @@
             <script type="module" src="engine/src/js/chessboard.js"></script>
             <script type="module" src="engine/src/js/ui.js"></script>
             <script type="module" src="engine/src/js/botmanager.js"></script>
+            <script type="module" src="engine/src/js/util.js"></script>
             <script type="module" src="engine.js"></script>
         </div>
     </body>

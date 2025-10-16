@@ -1,10 +1,10 @@
-import { moveObjToStandardNotation, choice } from "../engine/src/js/util.js"
+import { BoardUtilities,choice } from "../engine/src/js/util.js"
 import { Ui } from "../engine/src/js/ui.js"
 // A bot that actually carries out standard eval
 const displayDebug = false
 class MyBot {
     constructor() {
-        this.name = 'Smart Bot'
+        this.name = 'Smarter Bot'
         this.materialWeights = {
             'p':100,
             'b':350,
@@ -265,7 +265,7 @@ class MyBot {
 
         // Pick randomly among equally good best moves
         let chosenMove = choice(this.bestMoves);
-        let moveObj = moveObjToStandardNotation(chosenMove);
+        let moveObj = BoardUtilities.moveObjToStandardNotation(chosenMove);
 
         if (chosenMove.promotion) {
             moveObj.push(chosenMove.promotion); 
@@ -287,7 +287,7 @@ class MyBot {
         return moveObj;
     }
     cancelSearch() {
-        return moveObjToStandardNotation(choice(this.bestMoves))
+        return BoardUtilities.moveObjToStandardNotation(choice(this.bestMoves))
     }
 
 }

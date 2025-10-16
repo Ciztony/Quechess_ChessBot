@@ -1,4 +1,4 @@
-import { moveObjToStandardNotation, choice } from "../engine/src/js/util.js"
+import { BoardUtilities, choice } from "../engine/src/js/util.js"
 // A bot that plays random moves
 class MyBot {
     constructor() {
@@ -9,7 +9,7 @@ class MyBot {
         //console.log(legalMoves)
         let randomMove = choice(legalMoves)
         //console.log(randomMove)
-        let moveObj = moveObjToStandardNotation(randomMove)
+        let moveObj = BoardUtilities.moveObjToStandardNotation(randomMove)
         if (randomMove.isPromotion()) {
             moveObj.push(choice(['q','r','n','b']))
         } else {

@@ -9,13 +9,12 @@
   top: 15;
 }
 
-.botversion {
+.labeltype {
   font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
   font-size: 23px;
   color: white;
   position: relative;
   text-align: center;
-  top: 10
 }
 
 #botversion {
@@ -51,6 +50,9 @@
   font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
   font-size: x-large;
 }
+
+
+
 
 
 
